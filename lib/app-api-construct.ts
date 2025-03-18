@@ -65,7 +65,8 @@ export class AppApiConstruct extends Construct {
       environment: {
         USER_POOL_ID: props.userPoolId,
         CLIENT_ID: props.userPoolClientId,
-        REGION: cdk.Aws.REGION,
+        REGION: 'eu-west-1',
+        TABLE_NAME: moviesReviewsTable.tableName,
       },
     };
 
