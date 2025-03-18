@@ -39,8 +39,8 @@ export class AuthApiConstruct extends Construct {
       "confirm-signup.ts"
     );
 
-    this.addAuthRoute("signout", "GET", "SignoutFn", "signout.ts");
-    this.addAuthRoute("signin", "POST", "SigninFn", "signin.ts");
+    // this.addAuthRoute("signout", "GET", "SignoutFn", "signout.ts");
+    // this.addAuthRoute("signin", "POST", "SigninFn", "signin.ts");
   }
 
   private addAuthRoute(
@@ -66,7 +66,7 @@ export class AuthApiConstruct extends Construct {
 
     const fn = new node.NodejsFunction(this, fnName, {
       ...commonFnProps,
-      entry: `${__dirname}/../lambda/auth/${fnEntry}`,
+      entry: `${__dirname}/../lambdas/auth/${fnEntry}`,
     });
 
     resource.addMethod(method, new apig.LambdaIntegration(fn));
