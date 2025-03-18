@@ -7,7 +7,9 @@ import { movieReviews } from "../seed/movieReviews"
 import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apig from "aws-cdk-lib/aws-apigateway";
- 
+import * as iam from 'aws-cdk-lib/aws-iam';
+
+
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -61,8 +63,58 @@ export class Ca1CdkApisStack extends cdk.Stack {
 
     );
 
+    const addMovieReviewFn = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: `${__dirname}/../lambdas/addMovieReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+
+    const updateMovieReviewFn = new lambdanode.NodejsFunction(this, "updateMovieReviewFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: `${__dirname}/../lambdas/updateMovieReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    const getTranslatedMovieReviewFn = new lambdanode.NodejsFunction(this, "getTranslatedMovieReviewFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: `${__dirname}/../lambdas/getTranslatedReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
     // permissions 
     moviesReviewsTable.grantReadData(getMovieReviewsById)
+    moviesReviewsTable.grantReadWriteData(addMovieReviewFn)
+    moviesReviewsTable.grantReadWriteData(updateMovieReviewFn)
+    moviesReviewsTable.grantReadWriteData(getTranslatedMovieReviewFn)
+
+    // access for cdk to allow tranlate api access 
+
+    getTranslatedMovieReviewFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["translate:TranslateText"],
+        resources: ["*"],  
+        effect: iam.Effect.ALLOW,
+      })
+    );
 
     // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
@@ -80,12 +132,38 @@ export class Ca1CdkApisStack extends cdk.Stack {
 
 
     // Get all Movie Reviews by id endpoint
-    const movieEndpoint = api.root.addResource("movie");          
-const reviewsEndpoint = movieEndpoint.addResource("reviews");  
-const specificMovieEndpoint = reviewsEndpoint.addResource("{movieId}"); 
+
+    const movieEndpoint = api.root.addResource("movie");
+    const reviewsRootEndpoint = api.root.addResource("reviews")
+    const reviewsEndpoint = movieEndpoint.addResource("reviews");
+    const specificMovieEndpoint = reviewsEndpoint.addResource("{movieId}");
+    const specificReviewEndpoint = specificMovieEndpoint.addResource("reviews").addResource("{reviewId}")
+    const translatedReviewEndpoint = reviewsRootEndpoint.addResource("{reviewId}").addResource("{movieId}").addResource("translation")
+
+    // get a specific movie by Id
     specificMovieEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getMovieReviewsById, { proxy: true })
+    );
+
+    // add movie endpoint
+    reviewsEndpoint.addMethod(
+      "POST",
+      new apig.LambdaIntegration(addMovieReviewFn, { proxy: true })
+    );
+
+    // update movie reviews endpoint
+
+    specificReviewEndpoint.addMethod(
+      "PUT",
+      new apig.LambdaIntegration(updateMovieReviewFn, { proxy: true })
+    );
+
+    // get a translated movie review
+
+    translatedReviewEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getTranslatedMovieReviewFn, { proxy: true })
     );
 
     new cdk.CfnOutput(this, "APIEndpoint", {
