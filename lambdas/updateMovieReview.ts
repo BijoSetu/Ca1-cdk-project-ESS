@@ -37,7 +37,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 
       const requestBody =  JSON.parse(event.body);
-      const { content } = requestBody;
+    
     
       const response = await ddbDocClient.send(new UpdateCommand({
         TableName: process.env.TABLE_NAME,
@@ -47,7 +47,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         UpdateExpression: "SET Content = :content",
         ExpressionAttributeValues: {
-          ":content": content,
+          ":content": requestBody,
         },
         ReturnValues: "ALL_NEW",
       }));

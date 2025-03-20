@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { AppApiConstruct } from './app-api-construct'
 import { Construct } from "constructs";
 import { UserPool } from "aws-cdk-lib/aws-cognito";
-import { AuthApiConstruct } from './auth-api-construct'
+import { AuthApiConstruct } from './auth-api-construct';
 
 
 

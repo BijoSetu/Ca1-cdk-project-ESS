@@ -146,7 +146,7 @@ export class AppApiConstruct extends Construct {
     const movieEndpoint = api.root.addResource("movie");
     const reviewsRootEndpoint = api.root.addResource("reviews")
     const reviewsEndpoint = movieEndpoint.addResource("protected").addResource("reviews");
-    const specificMovieEndpoint = reviewsEndpoint.addResource("{movieId}");
+    const specificMovieEndpoint = movieEndpoint.addResource("reviews").addResource("{movieId}");
     const specificReviewEndpoint = specificMovieEndpoint.addResource("protected").addResource("reviews").addResource("{reviewId}")
     const translatedReviewEndpoint = reviewsRootEndpoint.addResource("{reviewId}").addResource("{movieId}").addResource("translation")
 

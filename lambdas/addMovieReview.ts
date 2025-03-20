@@ -31,8 +31,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          message: `Incorrect type. Must match the Movie schema`,
-          schema: schema.definitions["Movie"],
+          message: `Incorrect type. Must match the Movie Review schema`,
+          schema: schema.definitions["MovieReview"],
         }),
       };
     }

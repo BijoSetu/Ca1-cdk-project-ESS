@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand ,UpdateCommand} from "@aws-sdk/lib-dynamodb";
 import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
 import 'source-map-support/register';
 
@@ -39,19 +39,43 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     const originalContent = response.Item.Content;
+    const translations = response.Item.Translations || {}; // Default to empty object if not present
+
+    // Check if the translation already exists
+    if (translations[targetLanguage]) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          originalReview: originalContent,
+          translatedReview: translations[targetLanguage],
+          language: targetLanguage,
+        }),
+      };
+    }
 
     // Translate the content
     const translateResponse = await translateClient.send(new TranslateTextCommand({
       Text: originalContent,
-      SourceLanguageCode: "en",  // Assuming the original content is in English
+      SourceLanguageCode: "en",
       TargetLanguageCode: targetLanguage,
+    }));
+
+    const translatedText = translateResponse.TranslatedText;
+
+    // Update DynamoDB to store the new translation
+    await ddbDocClient.send(new UpdateCommand({
+      TableName: process.env.TABLE_NAME,
+      Key: { MovieId: movieId, ReviewId: reviewId },
+      UpdateExpression: "SET Translations.#lang = :translation",
+      ExpressionAttributeNames: { "#lang": targetLanguage },
+      ExpressionAttributeValues: { ":translation": translatedText ,},
     }));
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         originalReview: originalContent,
-        translatedReview: translateResponse.TranslatedText,
+        translatedReview: translatedText,
         language: targetLanguage,
       }),
     };

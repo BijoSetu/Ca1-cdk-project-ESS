@@ -34,6 +34,10 @@
                 },
                 "ReviewerId": {
                     "type": "string"
+                },
+                "Translations": {
+                    "additionalProperties": { "type": "string" },
+                    "type": "object"
                 }
             },
             "required": [
