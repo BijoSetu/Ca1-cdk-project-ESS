@@ -29,6 +29,8 @@ import {
     if (!event.headers || !event.headers.Cookie) {
       return undefined;
     }
+
+    console.log("[HEADERS]", JSON.stringify(event.headers));
   
     const cookiesStr = event.headers.Cookie;
     const cookiesArr = cookiesStr.split(";");
@@ -52,7 +54,7 @@ import {
       const url = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
       const { data }: { data: Jwk } = await axios.get(url);
       const pem = jwkToPem(data.keys[0]);
-  
+      console.log(jwt.verify(token, pem, { algorithms: ["RS256"] }));
       return jwt.verify(token, pem, { algorithms: ["RS256"] });
     } catch (err) {
       console.log(err);

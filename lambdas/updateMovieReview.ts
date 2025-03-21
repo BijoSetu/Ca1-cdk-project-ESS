@@ -37,8 +37,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 
       const requestBody =  JSON.parse(event.body);
+      const { Content } = requestBody;
     
-    
+      if (!Content || Content.trim() === "") {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: "Content field cannot be empty" }),
+        };
+      }
+
       const response = await ddbDocClient.send(new UpdateCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -47,7 +54,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         UpdateExpression: "SET Content = :content",
         ExpressionAttributeValues: {
-          ":content": requestBody,
+          ":content": Content,
         },
         ReturnValues: "ALL_NEW",
       }));

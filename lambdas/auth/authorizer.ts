@@ -6,7 +6,7 @@ export const handler: APIGatewayRequestAuthorizerHandler = async (event) => {
 
   const cookies: CookieMap = parseCookies(event);
 
-  if (!cookies) {
+  if (!cookies || !cookies.token ) {
     return {
       principalId: "",
       policyDocument: createPolicy(event, "Deny"),
