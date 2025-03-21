@@ -36,7 +36,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         }),
       };
     }
-
+    const reviewId = Date.now() % 10000;
+    body.ReviewId = reviewId;
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,

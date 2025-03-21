@@ -44,7 +44,6 @@
                 "Content",
                 "MovieId",
                 "ReviewDate",
-                "ReviewId",
                 "ReviewerId"
             ],
             "type": "object"
