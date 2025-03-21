@@ -47,7 +47,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         statusCode: 200,
         body: JSON.stringify({
           originalReview: originalContent,
-          translatedReview: translations[targetLanguage],
+          translatedReview: `${translations[targetLanguage]} --> (Translation fetched from DB)`,
           language: targetLanguage,
         }),
       };
