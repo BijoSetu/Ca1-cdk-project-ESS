@@ -1,24 +1,27 @@
 ## Enterprise Web Development module - Serverless REST Assignment.
 
-__Name:__ ....your name .....
+__Name:__ Bijo Sabu
 
 __Demo:__ ... link to your YouTube video demonstration ......
 
 ### Overview.
 
-State briefly the content of this repository.
+The repository contains a cdk stack that can be deployed to cloudformation. The cdk app has authentication apis including - Sign in, Sign Up, Confirm Sign up and Sign out 
+
+The Rest api of the stack include APIs for user to add, update, get and get a translated version of the reviews.
 
 ### App API endpoints.
 
-[ Provide a bullet-point list of the API's endpoints (excluding the Auth API) you have successfully implemented - see the assignment specification as a guide.]
-e.g.
-+ GET /movies/reviews/[movieId] - Get all the reviews for the specified movie. It will also support an optional query string that specifies a review ID or reviewer identity (email address), e.g. ?revieId=1234 or ?reviewerName=joe@gmail.com.
-+ POST /movies/reviews - add a movie review. Only authenticated users can post a review.
-+ etc,
++ GET /movie/reviews/{movieId} - Get all the reviews for the specified movie. It will also support an optional query string that specifies a review ID or reviewer identity (email address), e.g. ?revieId=1234 or ?reviewerName=joe@gmail.com.
++ POST /movie/protected/reviews - add a movie review. Only authenticated users can post a review.
++ GET /reviews/{reviewId}/{movieId}/translation - optional parameter "language" needed for translation which will need the language 
+       code as input.
++ PUT /movie/reviews/{movieId}/protected/reviews/{reviewId} - update a review for a specific movie. Only authenticated users can    
+       post a review.     
 
 ### Features.
 
-#### Translation persistence (if completed)
+#### Translation persistence
 
 [ Explain briefly your solution to the translation persistence requirement - no code excerpts required. Show the structure of a table item that includes review translations, e.g.
 
@@ -27,37 +30,43 @@ e.g.
 + ReviewerId - String (reviewer email address).
 + ReviewDate - String, e.g. “2025-01-20”. Updatable.
 + Content - String (the review text). Updatable.
-+ Translations - ?
++ Translations - Map<string, string>. Updatable
 ]
 
 #### Custom L2 Construct (if completed)
 
-[State briefly the infrastructure provisioned by your custom L2 construct. Show the structure of its input props object and list the public properties it exposes, e.g. taken from the Cognito lab,
+[Constructs used and the Props input
 
-Construct Input props object:
+AppApiConstruct Input props object:
+~~~
+type AppApiProps = {
+  userPoolId: string;
+  userPoolClientId: string;
+};
+~~~
+AppApiConstruct public properties
+~~~
+export class AppApiConstruct extends Construct {
+  public readonly api: apigateway.RestApi;
+~~~
+}
+AuthApiConstruct Input props object:
 ~~~
 type AuthApiProps = {
- userPoolId: string;
- userPoolClientId: string;
-}
+  userPoolId: string;
+  userPoolClientId: string;
+};
 ~~~
-Construct public properties
-~~~
-export class MyConstruct extends Construct {
-     public  PropertyName: type
-     etc.
+export class AuthApiConstruct extends Construct {
+  private auth: apig.IResource;
+  private userPoolId: string;
+  private userPoolClientId: string;
 ~~~
 }
 ]
-#### Restricted review updates (if completed)
+#### Restricted review updates
 
-[Explain briefly your solution to this requirement - no code excerpts required]
-
-
-#### API Gateway validators. (if completed)
-
-[State where in your app API's list of endpoints you used API Gateway's Validators. Include code excerpts from your stack code that illustrate their use.]
-
-###  Extra (If relevant).
-
-[ State any other aspects of your solution that use CDK/serverless features not covered in the lectures ]
+[
+The PUT and POST REST api than handle the posting of new review and updating an existing review can only be done by existing users
+Authorization token recieved during the sign up has to be used here on the api requeest as a header object inorder to be able to do these functions.
+]
