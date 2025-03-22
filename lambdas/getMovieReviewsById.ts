@@ -1,14 +1,11 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-
+import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDDbDocClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    // Extract path parameters and query string parameters
     const pathParameters = event?.pathParameters;
     const movieId = pathParameters?.movieId ? parseInt(pathParameters.movieId) : undefined;
     const queryStringParameters = event?.queryStringParameters;
@@ -18,70 +15,52 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     if (!movieId) {
       return {
         statusCode: 400,
-        headers: {
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ Message: "Missing movie Id" }),
       };
     }
 
-    // Prepare the base query parameters for DynamoDB query
-    let scanParams: any = {
+    let queryParams: any = {
       TableName: process.env.TABLE_NAME,
-      KeyConditionExpression: "MovieId  = :movieId",  // KeyConditionExpression to query by Partition Key
+      KeyConditionExpression: "MovieId = :movieId",
       ExpressionAttributeValues: {
-        ":movieId": movieId,  // Value for movieId filter
+        ":movieId": movieId,
       },
     };
 
-    // Optional filter for reviewId if provided
-    if (reviewId) {
-      scanParams.KeyConditionExpression += " AND ReviewId  = :reviewId";
-      scanParams.ExpressionAttributeValues[":reviewId"] = reviewId;
+    // If reviewId is provided, include it in KeyConditionExpression to fetch a single review
+    if (reviewId !== undefined) {
+      queryParams.KeyConditionExpression += " AND ReviewId = :reviewId";
+      queryParams.ExpressionAttributeValues[":reviewId"] = reviewId;
     }
 
-    // Optional filter for reviewerName if provided
+    // If reviewerName is provided, use a FilterExpression (post-query filtering)
     if (reviewerName) {
-      scanParams.FilterExpression = "ReviewerId = :reviewerName";
-      scanParams.ExpressionAttributeValues[":reviewerName"] = reviewerName;
+      queryParams.FilterExpression = "ReviewerId = :reviewerName";
+      queryParams.ExpressionAttributeValues[":reviewerName"] = reviewerName;
     }
 
-    // Execute the query command
-    const commandOutput = await ddbDocClient.send(new QueryCommand(scanParams));
-
+    const commandOutput = await ddbDocClient.send(new QueryCommand(queryParams));
     console.log("QueryCommand response:", commandOutput);
 
-    // If no items were returned, handle the case
     if (!commandOutput.Items || commandOutput.Items.length === 0) {
       return {
         statusCode: 404,
-        headers: {
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ Message: "No reviews found for the specified criteria" }),
       };
     }
 
-    // Return the reviews as response
-    const body = {
-      data: commandOutput.Items,
-    };
-
     return {
       statusCode: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ data: commandOutput.Items }),
     };
-
   } catch (error: any) {
     console.log("Error:", JSON.stringify(error));
     return {
       statusCode: 500,
-      headers: {
-        "content-type": "application/json",
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ error: error.message || "Internal Server Error" }),
     };
   }

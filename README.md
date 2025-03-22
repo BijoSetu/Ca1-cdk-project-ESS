@@ -1,7 +1,7 @@
 ## Enterprise Web Development module - Serverless REST Assignment.
 
 __Name:__ Bijo Sabu  
-__Demo:__ [Link to your YouTube video demonstration](...)  
+__Demo:__ [https://youtu.be/Mqv9NcTzf_w](...)  
 
 ### Overview  
 
@@ -36,7 +36,7 @@ The database stores translation data with the following schema:
 + Translations - Map<string, string> (Updatable)
 ```
 
-#### Custom L2 Construct (if completed)  
+#### Custom L2 Construct
 
 ##### Constructs used and input properties  
 
@@ -77,4 +77,4 @@ export class AuthApiConstruct extends Construct {
 #### Restricted Review Updates  
 
 - The **PUT** and **POST** REST APIs that handle posting and updating reviews can only be accessed by existing users.  
-- An **Authorization token** received during sign-up must be used in the API request header to perform these actions.  
+- An **Authorization token** received during sign-in must be used in the API request header to perform these actions.  
