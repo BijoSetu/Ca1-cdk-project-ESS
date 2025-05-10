@@ -3,8 +3,7 @@ import { AppApiConstruct } from './app-api-construct'
 import { Construct } from "constructs";
 import { UserPool } from "aws-cdk-lib/aws-cognito";
 import { AuthApiConstruct } from './auth-api-construct';
-
-
+import { S3FrontendConstruct } from './s3-frontend-construct';
 
 export class Ca1CdkApisStack extends cdk.Stack {
 
@@ -34,6 +33,11 @@ export class Ca1CdkApisStack extends cdk.Stack {
       userPoolId: userPoolId,
       userPoolClientId: userPoolClientId,
     });
+
+
+    
+    // stack for frontend deployement
+    new S3FrontendConstruct(this, 'S3FrontendStack');
   }
 }
 

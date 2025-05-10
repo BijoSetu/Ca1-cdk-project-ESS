@@ -33,6 +33,20 @@ export class AppApiConstruct extends Construct {
       tableName: "MovieReviews",
     });
 
+      // Create the DynamoDB table
+      const reviewsTable = new dynamodb.Table(this, "ReviewsTable", {
+        partitionKey: { name: "ReviewId", type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        tableName: "ReviewsTable",
+         // Change to RETAIN for production
+      });
+  
+      // Add a global secondary index
+      reviewsTable.addGlobalSecondaryIndex({
+        indexName: "MovieNameIndex",
+        partitionKey: { name: "MovieName", type: dynamodb.AttributeType.STRING },
+      });
 
 
     // resources 
@@ -80,6 +94,23 @@ export class AppApiConstruct extends Construct {
 
     );
 
+    // Create the postMovieReviews Lambda function
+    const postMovieReviewsFn = new lambdanode.NodejsFunction(this, "PostMovieReviewsFn", {
+      ...appCommonFnProps,
+      entry: `${__dirname}/../lambdas/postMovieReviews.ts`,
+      environment: {
+        REVIEWS_TABLE_NAME: reviewsTable.tableName, // Set the table name as an environment variable
+      },
+    });
+
+    const getAllMovieReviewsFn = new lambdanode.NodejsFunction(this, "GetAllMovieReviewsFn", {
+      ...appCommonFnProps,
+      entry: `${__dirname}/../lambdas/getAllMovieReviews.ts`,
+      environment: {
+        REVIEWS_TABLE_NAME: reviewsTable.tableName,
+      },
+    });
+
     const addMovieReviewFnProtected = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
       ...appCommonFnProps,
       entry: `${__dirname}/../lambdas/addMovieReview.ts`,
@@ -101,6 +132,8 @@ export class AppApiConstruct extends Construct {
     moviesReviewsTable.grantReadWriteData(addMovieReviewFnProtected)
     moviesReviewsTable.grantReadWriteData(updateMovieReviewFnProtected)
     moviesReviewsTable.grantReadWriteData(getTranslatedMovieReviewFnPublic)
+    reviewsTable.grantWriteData(postMovieReviewsFn);
+    reviewsTable.grantReadData(getAllMovieReviewsFn);
 
     // access for cdk to allow translate api access 
 
@@ -126,10 +159,27 @@ export class AppApiConstruct extends Construct {
       },
     });
 
+      // Create the API Gateway
+      this.api = new apig.RestApi(this, "AppApi", {
+        description: "App API for managing movie reviews",
+        deployOptions: {
+          stageName: "dev",
+        },
+        defaultCorsPreflightOptions: {
+          allowOrigins: ["http://localhost:3000", "http://localhost:3001"],
+          allowCredentials: true,
+          allowMethods: apigateway.Cors.ALL_METHODS,
+          allowHeaders: ["Content-Type"],
+        },
+      });
+       
+
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
       entry: "./lambdas/auth/authorizer.ts",
     });
+
+ 
 
     const requestAuthorizer = new apig.RequestAuthorizer(
       this,
@@ -142,7 +192,7 @@ export class AppApiConstruct extends Construct {
     );
 
     // Get all Movie Reviews by id endpoint
-
+    const reviewsResource = this.api.root.addResource("reviews");
     const movieEndpoint = api.root.addResource("movie");
     const reviewsRootEndpoint = api.root.addResource("reviews")
     const reviewsEndpoint = movieEndpoint.addResource("protected").addResource("reviews");
@@ -155,6 +205,18 @@ export class AppApiConstruct extends Construct {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsByIdPublic, { proxy: true })
     );
+  
+
+    reviewsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(getAllMovieReviewsFn, { proxy: true })
+    );
+          // Add the POST method to the /reviews resource
+          reviewsResource.addMethod(
+            "POST",
+            new apigateway.LambdaIntegration(postMovieReviewsFn, { proxy: true })
+          );
+
 
     // add movie endpoint
     reviewsEndpoint.addMethod(
@@ -184,6 +246,13 @@ export class AppApiConstruct extends Construct {
 
     new cdk.CfnOutput(this, "APIEndpoint", {
       value: api.url!,
+      description: "The API Gateway endpoint URL",
+    });
+
+    
+     // utput the API endpoint
+     new cdk.CfnOutput(this, "RESTAPIEndpoint", {
+      value: this.api.url!,
       description: "The API Gateway endpoint URL",
     });
   }

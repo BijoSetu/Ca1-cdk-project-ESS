@@ -36,7 +36,7 @@
                     "type": "string"
                 },
                 "Translations": {
-                    "additionalProperties": { "type": "string" },
+                    "additionalProperties": false,
                     "type": "object"
                 }
             },
@@ -45,6 +45,37 @@
                 "MovieId",
                 "ReviewDate",
                 "ReviewerId"
+            ],
+            "type": "object"
+        },
+        "ReviewMovie": {
+            "additionalProperties": false,
+            "properties": {
+                "Author": {
+                    "type": "string"
+                },
+                "MovieName": {
+                    "type": "string"
+                },
+                "PhotoUrl": {
+                    "type": "string"
+                },
+                "Rating": {
+                    "type": "string"
+                },
+                "ReviewId": {
+                    "type": "string"
+                },
+                "ReviewText": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "Author",
+                "MovieName",
+                "PhotoUrl",
+                "Rating",
+                "ReviewText"
             ],
             "type": "object"
         },
