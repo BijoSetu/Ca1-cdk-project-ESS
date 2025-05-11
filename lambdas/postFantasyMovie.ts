@@ -5,7 +5,7 @@ import Ajv from "ajv";
 import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
-const isValidBodyParams = ajv.compile(schema.definitions["ReviewMovie"] || {});
+const isValidBodyParams = ajv.compile(schema.definitions["FantasyMovieDetails"] || {});
 
 const ddbDocClient = createDDbDocClient();
 
@@ -32,23 +32,23 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         statusCode: 400,
         headers: {
           "content-type": "application/json",
-          "Access-Control-Allow-Origin": "http://localhost:3000", // Allow requests from your frontend
+          "Access-Control-Allow-Origin": "http://localhost:3000",  
           "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
         },
         body: JSON.stringify({
           message: `Invalid request body. Must match the Movie Review schema.`,
-          schema: schema.definitions["ReviewMovie"],
+          schema: schema.definitions["FantasyMovieDetails"],
         }),
       };
     }
 
-    const reviewId = (Date.now() % 10000).toString(); // Generate a unique ReviewId
-    body.ReviewId = reviewId;
+    const movieId = (Date.now() % 10000);  
+    body.MovieId = movieId;
 
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
-        TableName: process.env.REVIEWS_TABLE_NAME!,
+        TableName: process.env.FANTASY_TABLE_NAME!,
         Item: body,
       })
     );

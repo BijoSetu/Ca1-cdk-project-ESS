@@ -17,6 +17,45 @@
             ],
             "type": "object"
         },
+        "FantasyMovieDetails": {
+            "additionalProperties": false,
+            "properties": {
+                "Genres": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "MovieId": {
+                    "type": "number"
+                },
+                "Overview": {
+                    "type": "string"
+                },
+                "ProductionCompany": {
+                    "type": "string"
+                },
+                "ReleaseDate": {
+                    "type": "string"
+                },
+                "Runtime": {
+                    "type": "number"
+                },
+                "Title": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "Genres",
+                "MovieId",
+                "Overview",
+                "ProductionCompany",
+                "ReleaseDate",
+                "Runtime",
+                "Title"
+            ],
+            "type": "object"
+        },
         "MovieReview": {
             "additionalProperties": false,
             "properties": {

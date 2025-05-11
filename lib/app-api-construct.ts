@@ -48,6 +48,14 @@ export class AppApiConstruct extends Construct {
         partitionKey: { name: "MovieName", type: dynamodb.AttributeType.STRING },
       });
 
+      const fantasyMovieTable = new dynamodb.Table(this, "fantasyMovieTable", {
+        partitionKey: { name: "MovieId", type: dynamodb.AttributeType.NUMBER},
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        tableName: "fantasyMovieTable",
+         // Change to RETAIN for production
+      });
+
 
     // resources 
     new custom.AwsCustomResource(this, "movieReviewsInitData", {
@@ -93,7 +101,13 @@ export class AppApiConstruct extends Construct {
       },
 
     );
-
+    const postFantasyMoviesFn = new lambdanode.NodejsFunction(this, "postFantasyMoviesFn", {
+      ...appCommonFnProps,
+      entry: `${__dirname}/../lambdas/postFantasyMovie.ts`,
+      environment: {
+        FANTASY_TABLE_NAME: fantasyMovieTable.tableName, // Set the table name as an environment variable
+      },
+    });
     // Create the postMovieReviews Lambda function
     const postMovieReviewsFn = new lambdanode.NodejsFunction(this, "PostMovieReviewsFn", {
       ...appCommonFnProps,
@@ -134,6 +148,7 @@ export class AppApiConstruct extends Construct {
     moviesReviewsTable.grantReadWriteData(getTranslatedMovieReviewFnPublic)
     reviewsTable.grantWriteData(postMovieReviewsFn);
     reviewsTable.grantReadData(getAllMovieReviewsFn);
+    fantasyMovieTable.grantReadWriteData(postFantasyMoviesFn);
 
     // access for cdk to allow translate api access 
 
@@ -192,6 +207,7 @@ export class AppApiConstruct extends Construct {
     );
 
     // Get all Movie Reviews by id endpoint
+    const fantasyResource = this.api.root.addResource("fantasy-movie");
     const reviewsResource = this.api.root.addResource("reviews");
     const movieEndpoint = api.root.addResource("movie");
     const reviewsRootEndpoint = api.root.addResource("reviews")
@@ -205,7 +221,10 @@ export class AppApiConstruct extends Construct {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsByIdPublic, { proxy: true })
     );
-  
+    fantasyResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(postFantasyMoviesFn, { proxy: true })
+    );
 
     reviewsResource.addMethod(
       "GET",
