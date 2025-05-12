@@ -108,6 +108,14 @@ export class AppApiConstruct extends Construct {
         FANTASY_TABLE_NAME: fantasyMovieTable.tableName, // Set the table name as an environment variable
       },
     });
+
+     const getFantasyMovieFn = new lambdanode.NodejsFunction(this, "getFantasyMovieFn", {
+      ...appCommonFnProps,
+      entry: `${__dirname}/../lambdas/getFantasyMovie.ts`,
+       environment: {
+        FANTASY_TABLE_NAME: fantasyMovieTable.tableName, // Set the table name as an environment variable
+      },
+    });
     // Create the postMovieReviews Lambda function
     const postMovieReviewsFn = new lambdanode.NodejsFunction(this, "PostMovieReviewsFn", {
       ...appCommonFnProps,
@@ -141,6 +149,8 @@ export class AppApiConstruct extends Construct {
       entry: `${__dirname}/../lambdas/getTranslatedReview.ts`,
     });
 
+    
+
     // permissions 
     moviesReviewsTable.grantReadData(getMovieReviewsByIdPublic)
     moviesReviewsTable.grantReadWriteData(addMovieReviewFnProtected)
@@ -149,6 +159,9 @@ export class AppApiConstruct extends Construct {
     reviewsTable.grantWriteData(postMovieReviewsFn);
     reviewsTable.grantReadData(getAllMovieReviewsFn);
     fantasyMovieTable.grantReadWriteData(postFantasyMoviesFn);
+    fantasyMovieTable.grantReadData(getFantasyMovieFn);
+
+    
 
     // access for cdk to allow translate api access 
 
@@ -225,7 +238,10 @@ export class AppApiConstruct extends Construct {
       "POST",
       new apigateway.LambdaIntegration(postFantasyMoviesFn, { proxy: true })
     );
-
+ fantasyResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(getFantasyMovieFn, { proxy: true })
+    );
     reviewsResource.addMethod(
       "GET",
       new apigateway.LambdaIntegration(getAllMovieReviewsFn, { proxy: true })

@@ -21,10 +21,7 @@
             "additionalProperties": false,
             "properties": {
                 "Genres": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
+                    "type": "string"
                 },
                 "MovieId": {
                     "type": "number"
@@ -39,7 +36,7 @@
                     "type": "string"
                 },
                 "Runtime": {
-                    "type": "number"
+                    "type": "string"
                 },
                 "Title": {
                     "type": "string"
